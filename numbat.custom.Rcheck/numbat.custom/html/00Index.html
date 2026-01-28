@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head><title>R: Haplotype-Aware CNV Analysis from scRNA-Seq (Custom Fork with
+External Clustering)</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" type="text/css" href="R.css">
+</head><body><div class="container">
+<h1> Haplotype-Aware CNV Analysis from scRNA-Seq (Custom Fork with
+External Clustering)
+<img class="toplogo" src="../../../doc/html/Rlogo.svg" alt="[R logo]">
+</h1>
+<hr>
+<div style="text-align: center;">
+<a href="../../../doc/html/packages.html"><img class="arrow" src="../../../doc/html/left.jpg" alt="[Up]"></a>
+<a href="../../../doc/html/index.html"><img class="arrow" src="../../../doc/html/up.jpg" alt="[Top]"></a>
+</div><h2>Documentation for package &lsquo;numbat.custom&rsquo; version 1.5.1</h2>
+
+<ul><li><a href="../DESCRIPTION" type="text/plain; charset=utf-8">DESCRIPTION file</a>.</li>
+<li><a href="../NEWS.md">Package NEWS</a>.</li>
+</ul>
+
+<h2>Help Pages</h2>
+
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="acen_hg19.html">acen_hg19</a></td>
+<td>centromere regions (hg19)</td></tr>
+<tr><td style="width: 25%;"><a href="acen_hg38.html">acen_hg38</a></td>
+<td>centromere regions (hg38)</td></tr>
+<tr><td style="width: 25%;"><a href="aggregate_counts.html">aggregate_counts</a></td>
+<td>Utility function to make reference gene expression profiles</td></tr>
+<tr><td style="width: 25%;"><a href="analyze_bulk.html">analyze_bulk</a></td>
+<td>Call CNVs in a pseudobulk profile using the Numbat joint HMM</td></tr>
+<tr><td style="width: 25%;"><a href="annotate_genes.html">annotate_genes</a></td>
+<td>Annotate genes on allele dataframe</td></tr>
+<tr><td style="width: 25%;"><a href="annot_ref.html">annot_ref</a></td>
+<td>example reference cell annotation</td></tr>
+<tr><td style="width: 25%;"><a href="bulk_example.html">bulk_example</a></td>
+<td>example pseudobulk dataframe</td></tr>
+<tr><td style="width: 25%;"><a href="chrom_sizes_hg19.html">chrom_sizes_hg19</a></td>
+<td>chromosome sizes (hg19)</td></tr>
+<tr><td style="width: 25%;"><a href="chrom_sizes_hg38.html">chrom_sizes_hg38</a></td>
+<td>chromosome sizes (hg38)</td></tr>
+<tr><td style="width: 25%;"><a href="cnv_heatmap.html">cnv_heatmap</a></td>
+<td>Plot CNV heatmap</td></tr>
+<tr><td style="width: 25%;"><a href="count_mat_example.html">count_mat_example</a></td>
+<td>example gene expression count matrix</td></tr>
+<tr><td style="width: 25%;"><a href="count_mat_ref.html">count_mat_ref</a></td>
+<td>example reference count matrix</td></tr>
+<tr><td style="width: 25%;"><a href="detect_clonal_loh.html">detect_clonal_loh</a></td>
+<td>Call clonal LOH using SNP density.  Rcommended for cell lines or tumor samples with no normal cells.</td></tr>
+<tr><td style="width: 25%;"><a href="df_allele_example.html">df_allele_example</a></td>
+<td>example allele count dataframe</td></tr>
+<tr><td style="width: 25%;"><a href="gaps_hg19.html">gaps_hg19</a></td>
+<td>genome gap regions (hg19)</td></tr>
+<tr><td style="width: 25%;"><a href="gaps_hg38.html">gaps_hg38</a></td>
+<td>genome gap regions (hg38)</td></tr>
+<tr><td style="width: 25%;"><a href="get_bulk.html">get_bulk</a></td>
+<td>Aggregate single-cell data into combined bulk expression and allele profile</td></tr>
+<tr><td style="width: 25%;"><a href="get_gtree.html">get_gtree</a></td>
+<td>Get a tidygraph tree with simplified mutational history.</td></tr>
+<tr><td style="width: 25%;"><a href="gexp_roll_example.html">gexp_roll_example</a></td>
+<td>example smoothed gene expression dataframe</td></tr>
+<tr><td style="width: 25%;"><a href="gtf_hg19.html">gtf_hg19</a></td>
+<td>gene model (hg19)</td></tr>
+<tr><td style="width: 25%;"><a href="gtf_hg38.html">gtf_hg38</a></td>
+<td>gene model (hg38)</td></tr>
+<tr><td style="width: 25%;"><a href="gtf_mm10.html">gtf_mm10</a></td>
+<td>gene model (mm10)</td></tr>
+<tr><td style="width: 25%;"><a href="hc_example.html">hc_example</a></td>
+<td>example hclust tree</td></tr>
+<tr><td style="width: 25%;"><a href="joint_post_example.html">joint_post_example</a></td>
+<td>example joint single-cell cnv posterior dataframe</td></tr>
+<tr><td style="width: 25%;"><a href="mut_graph_example.html">mut_graph_example</a></td>
+<td>example mutation graph</td></tr>
+<tr><td style="width: 25%;"><a href="Numbat.html">Numbat</a></td>
+<td>Numbat R6 class</td></tr>
+<tr><td style="width: 25%;"><a href="phylogeny_example.html">phylogeny_example</a></td>
+<td>example single-cell phylogeny</td></tr>
+<tr><td style="width: 25%;"><a href="plot_bulks.html">plot_bulks</a></td>
+<td>Plot a group of pseudobulk HMM profiles</td></tr>
+<tr><td style="width: 25%;"><a href="plot_consensus.html">plot_consensus</a></td>
+<td>Plot consensus CNVs</td></tr>
+<tr><td style="width: 25%;"><a href="plot_exp_roll.html">plot_exp_roll</a></td>
+<td>Plot single-cell smoothed expression magnitude heatmap</td></tr>
+<tr><td style="width: 25%;"><a href="plot_mut_history.html">plot_mut_history</a></td>
+<td>Plot mutational history</td></tr>
+<tr><td style="width: 25%;"><a href="plot_phylo_heatmap.html">plot_phylo_heatmap</a></td>
+<td>Plot single-cell CNV calls along with the clonal phylogeny</td></tr>
+<tr><td style="width: 25%;"><a href="plot_psbulk.html">plot_psbulk</a></td>
+<td>Plot a pseudobulk HMM profile</td></tr>
+<tr><td style="width: 25%;"><a href="plot_sc_tree.html">plot_sc_tree</a></td>
+<td>Plot single-cell smoothed expression magnitude heatmap</td></tr>
+<tr><td style="width: 25%;"><a href="pre_likelihood_hmm.html">pre_likelihood_hmm</a></td>
+<td>HMM object for unit tests</td></tr>
+<tr><td style="width: 25%;"><a href="ref_hca.html">ref_hca</a></td>
+<td>reference expression magnitudes from HCA</td></tr>
+<tr><td style="width: 25%;"><a href="ref_hca_counts.html">ref_hca_counts</a></td>
+<td>reference expression counts from HCA</td></tr>
+<tr><td style="width: 25%;"><a href="run_numbat.html">run_numbat</a></td>
+<td>Run workflow to decompose tumor subclones</td></tr>
+<tr><td style="width: 25%;"><a href="segs_example.html">segs_example</a></td>
+<td>example CNV segments dataframe</td></tr>
+<tr><td style="width: 25%;"><a href="upgma.html">upgma</a></td>
+<td>UPGMA and WPGMA clustering</td></tr>
+<tr><td style="width: 25%;"><a href="vcf_meta.html">vcf_meta</a></td>
+<td>example VCF header</td></tr>
+</table>
+</div></body></html>

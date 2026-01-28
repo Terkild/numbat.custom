@@ -1,0 +1,51 @@
+Numbat                  Numbat R6 class
+acen_hg19               centromere regions (hg19)
+acen_hg38               centromere regions (hg38)
+aggregate_counts        Utility function to make reference gene
+                        expression profiles
+analyze_bulk            Call CNVs in a pseudobulk profile using the
+                        Numbat joint HMM
+annot_ref               example reference cell annotation
+annotate_genes          Annotate genes on allele dataframe
+bulk_example            example pseudobulk dataframe
+chrom_sizes_hg19        chromosome sizes (hg19)
+chrom_sizes_hg38        chromosome sizes (hg38)
+cnv_heatmap             Plot CNV heatmap
+count_mat_example       example gene expression count matrix
+count_mat_ref           example reference count matrix
+detect_clonal_loh       Call clonal LOH using SNP density.  Rcommended
+                        for cell lines or tumor samples with no normal
+                        cells.
+df_allele_example       example allele count dataframe
+gaps_hg19               genome gap regions (hg19)
+gaps_hg38               genome gap regions (hg38)
+get_bulk                Aggregate single-cell data into combined bulk
+                        expression and allele profile
+get_gtree               Get a tidygraph tree with simplified mutational
+                        history.
+gexp_roll_example       example smoothed gene expression dataframe
+gtf_hg19                gene model (hg19)
+gtf_hg38                gene model (hg38)
+gtf_mm10                gene model (mm10)
+hc_example              example hclust tree
+joint_post_example      example joint single-cell cnv posterior
+                        dataframe
+mut_graph_example       example mutation graph
+phylogeny_example       example single-cell phylogeny
+plot_bulks              Plot a group of pseudobulk HMM profiles
+plot_consensus          Plot consensus CNVs
+plot_exp_roll           Plot single-cell smoothed expression magnitude
+                        heatmap
+plot_mut_history        Plot mutational history
+plot_phylo_heatmap      Plot single-cell CNV calls along with the
+                        clonal phylogeny
+plot_psbulk             Plot a pseudobulk HMM profile
+plot_sc_tree            Plot single-cell smoothed expression magnitude
+                        heatmap
+pre_likelihood_hmm      HMM object for unit tests
+ref_hca                 reference expression magnitudes from HCA
+ref_hca_counts          reference expression counts from HCA
+run_numbat              Run workflow to decompose tumor subclones
+segs_example            example CNV segments dataframe
+upgma                   UPGMA and WPGMA clustering
+vcf_meta                example VCF header

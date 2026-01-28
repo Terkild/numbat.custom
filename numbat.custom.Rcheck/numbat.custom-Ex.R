@@ -1,0 +1,220 @@
+pkgname <- "numbat.custom"
+source(file.path(R.home("share"), "R", "examples-header.R"))
+options(warn = 1)
+library('numbat.custom')
+
+base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+cleanEx()
+nameEx("aggregate_counts")
+### * aggregate_counts
+
+flush(stderr()); flush(stdout())
+
+### Name: aggregate_counts
+### Title: Utility function to make reference gene expression profiles
+### Aliases: aggregate_counts
+
+### ** Examples
+
+ref_custom = aggregate_counts(count_mat_ref, annot_ref, verbose = FALSE)
+
+
+
+cleanEx()
+nameEx("analyze_bulk")
+### * analyze_bulk
+
+flush(stderr()); flush(stdout())
+
+### Name: analyze_bulk
+### Title: Call CNVs in a pseudobulk profile using the Numbat joint HMM
+### Aliases: analyze_bulk
+
+### ** Examples
+
+bulk_analyzed = analyze_bulk(bulk_example, t = 1e-5, find_diploid = FALSE, retest = FALSE)
+
+
+
+cleanEx()
+nameEx("cnv_heatmap")
+### * cnv_heatmap
+
+flush(stderr()); flush(stdout())
+
+### Name: cnv_heatmap
+### Title: Plot CNV heatmap
+### Aliases: cnv_heatmap
+
+### ** Examples
+
+p = cnv_heatmap(segs_example)
+
+
+
+cleanEx()
+nameEx("detect_clonal_loh")
+### * detect_clonal_loh
+
+flush(stderr()); flush(stdout())
+
+### Name: detect_clonal_loh
+### Title: Call clonal LOH using SNP density.  Rcommended for cell lines or
+###   tumor samples with no normal cells.
+### Aliases: detect_clonal_loh
+
+### ** Examples
+
+segs_loh = detect_clonal_loh(bulk_example)
+
+
+
+cleanEx()
+nameEx("get_bulk")
+### * get_bulk
+
+flush(stderr()); flush(stdout())
+
+### Name: get_bulk
+### Title: Aggregate single-cell data into combined bulk expression and
+###   allele profile
+### Aliases: get_bulk
+
+### ** Examples
+
+bulk_example = get_bulk(
+    count_mat = count_mat_example,
+    lambdas_ref = ref_hca,
+    df_allele = df_allele_example,
+    gtf = gtf_hg38)
+
+
+
+cleanEx()
+nameEx("plot_bulks")
+### * plot_bulks
+
+flush(stderr()); flush(stdout())
+
+### Name: plot_bulks
+### Title: Plot a group of pseudobulk HMM profiles
+### Aliases: plot_bulks
+
+### ** Examples
+
+p = plot_bulks(bulk_example)
+
+
+
+cleanEx()
+nameEx("plot_consensus")
+### * plot_consensus
+
+flush(stderr()); flush(stdout())
+
+### Name: plot_consensus
+### Title: Plot consensus CNVs
+### Aliases: plot_consensus
+
+### ** Examples
+
+p = plot_consensus(segs_example)
+
+
+
+cleanEx()
+nameEx("plot_exp_roll")
+### * plot_exp_roll
+
+flush(stderr()); flush(stdout())
+
+### Name: plot_exp_roll
+### Title: Plot single-cell smoothed expression magnitude heatmap
+### Aliases: plot_exp_roll
+
+### ** Examples
+
+p = plot_exp_roll(gexp_roll_example, gtf = gtf_hg38, hc = hc_example, k = 3)
+
+
+
+cleanEx()
+nameEx("plot_mut_history")
+### * plot_mut_history
+
+flush(stderr()); flush(stdout())
+
+### Name: plot_mut_history
+### Title: Plot mutational history
+### Aliases: plot_mut_history
+
+### ** Examples
+
+p = plot_mut_history(mut_graph_example)
+
+
+
+cleanEx()
+nameEx("plot_phylo_heatmap")
+### * plot_phylo_heatmap
+
+flush(stderr()); flush(stdout())
+
+### Name: plot_phylo_heatmap
+### Title: Plot single-cell CNV calls along with the clonal phylogeny
+### Aliases: plot_phylo_heatmap
+
+### ** Examples
+
+p = plot_phylo_heatmap(
+    gtree = phylogeny_example,
+    joint_post = joint_post_example,
+    segs_consensus = segs_example)
+
+
+
+cleanEx()
+nameEx("plot_psbulk")
+### * plot_psbulk
+
+flush(stderr()); flush(stdout())
+
+### Name: plot_psbulk
+### Title: Plot a pseudobulk HMM profile
+### Aliases: plot_psbulk
+
+### ** Examples
+
+p = plot_psbulk(bulk_example)
+
+
+
+cleanEx()
+nameEx("plot_sc_tree")
+### * plot_sc_tree
+
+flush(stderr()); flush(stdout())
+
+### Name: plot_sc_tree
+### Title: Plot single-cell smoothed expression magnitude heatmap
+### Aliases: plot_sc_tree
+
+### ** Examples
+
+p = plot_sc_tree(phylogeny_example)
+
+
+
+### * <FOOTER>
+###
+cleanEx()
+options(digits = 7L)
+base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+grDevices::dev.off()
+###
+### Local variables: ***
+### mode: outline-minor ***
+### outline-regexp: "\\(> \\)?### [*]+" ***
+### End: ***
+quit('no')

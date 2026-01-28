@@ -1,0 +1,28 @@
+* installing *source* package ‘numbat.custom’ ...
+** this is package ‘numbat.custom’ version ‘1.5.1’
+** using staged installation
+** libs
+using C++ compiler: ‘g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0’
+g++ -std=gnu++17 -I"/usr/share/R/include" -DNDEBUG  -I'/mnt/data/packages/R/4.5/Rcpp/include' -I'/mnt/data/packages/R/4.5/RcppArmadillo/include' -I'/mnt/data/packages/R/4.5/roptim/include'    -I"../inst/include" -fpic  -g -O2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -ffile-prefix-map=/build/r-base-ePVXIN/r-base-4.5.2=. -fstack-protector-strong -fstack-clash-protection -Wformat -Werror=format-security -fcf-protection -fdebug-prefix-map=/build/r-base-ePVXIN/r-base-4.5.2=/usr/src/r-base-4.5.2-1.2404.0 -Wdate-time -D_FORTIFY_SOURCE=3   -c RcppExports.cpp -o RcppExports.o
+g++ -std=gnu++17 -I"/usr/share/R/include" -DNDEBUG  -I'/mnt/data/packages/R/4.5/Rcpp/include' -I'/mnt/data/packages/R/4.5/RcppArmadillo/include' -I'/mnt/data/packages/R/4.5/roptim/include'    -I"../inst/include" -fpic  -g -O2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -ffile-prefix-map=/build/r-base-ePVXIN/r-base-4.5.2=. -fstack-protector-strong -fstack-clash-protection -Wformat -Werror=format-security -fcf-protection -fdebug-prefix-map=/build/r-base-ePVXIN/r-base-4.5.2=/usr/src/r-base-4.5.2-1.2404.0 -Wdate-time -D_FORTIFY_SOURCE=3   -c misc.cpp -o misc.o
+'LdFlags' has not been needed since 2013 (!!) and may get removed in 2027. Please update your 'Makevars'.
+'RcppLdFlags' has not been needed since 2013 (!!) and may get removed in 2027. Please update your 'Makevars'.
+g++ -std=gnu++17 -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -flto=auto -ffat-lto-objects -Wl,-z,relro -o numbat.custom.so RcppExports.o misc.o -lpthread -llapack -lblas -lgfortran -lm -lquadmath -L/usr/lib/R/lib -lR
+'LdFlags' has not been needed since 2013 (!!) and may get removed in 2027. Please update your 'Makevars'.
+'RcppLdFlags' has not been needed since 2013 (!!) and may get removed in 2027. Please update your 'Makevars'.
+'LdFlags' has not been needed since 2013 (!!) and may get removed in 2027. Please update your 'Makevars'.
+'RcppLdFlags' has not been needed since 2013 (!!) and may get removed in 2027. Please update your 'Makevars'.
+installing to /home/testuser/git/numbat_custom/numbat.custom.Rcheck/00LOCK-numbat.custom/00new/numbat.custom/libs
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (numbat.custom)
