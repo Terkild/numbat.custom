@@ -31,7 +31,7 @@ NULL
 #' @param out_dir string Output directory
 #' @param gamma numeric Dispersion parameter for the Beta-Binomial allele model
 #' @param t numeric Transition probability
-#' @param init_k integer Number of clusters in the initial clustering
+#' @param init_k integer Total number of subclusters. When init_clusters is provided, subclusters are selected globally based on distinctness (Ward's merge height). When init_clusters is NULL, this is the number of clusters in expression-based initialization.
 #' @param min_cells integer Minimum number of cells to run HMM on
 #' @param min_genes integer Minimum number of genes to call a segment
 #' @param max_cost numeric Likelihood threshold to collapse internal branches
@@ -63,14 +63,14 @@ NULL
 #' @param exclude_neu logical Whether to exclude neutral segments from CNV retesting (internal use only)
 #' @param plot logical Whether to plot results
 #' @param verbose logical Verbosity
-#' @param init_clusters named vector User-provided external cluster labels (e.g., from Seurat/scanpy). Names should be cell IDs and values should be cluster IDs. When provided, hierarchical clustering is performed within each external cluster separately.
-#' @param cells_per_subcluster integer Target number of cells per subcluster when using init_clusters. Determines k for cutting the dendrogram within each external cluster.
+#' @param init_clusters named vector User-provided external cluster labels (e.g., from Seurat/scanpy). Names should be cell IDs and values should be cluster IDs. When provided, subclusters are selected globally from all init_clusters based on distinctness.
+#' @param cells_per_subcluster integer Minimum number of cells per subcluster. Subclusters with fewer cells will not be created, ensuring robust downstream analysis.
 #' @return a status code
 #' @export
 run_numbat = function(
         count_mat, lambdas_ref, df_allele, gtf = NULL, genome = 'hg38',
         out_dir = tempdir(), max_iter = 2, max_nni = 100, t = 1e-5, gamma = 20, min_LLR = 5,
-        alpha = 1e-4, eps = 1e-5, max_entropy = 0.5, init_k = 3, min_cells = 50, tau = 0.3, nu = 1,
+        alpha = 1e-4, eps = 1e-5, max_entropy = 0.5, init_k = 20, min_cells = 50, tau = 0.3, nu = 1,
         max_cost = ncol(count_mat) * tau, n_cut = 0, min_depth = 0, plot_min_depth = 8, common_diploid = TRUE, min_overlap = 0.45,
         ncores = 1, ncores_nni = ncores, random_init = FALSE, segs_loh = NULL, call_clonal_loh = FALSE,
         verbose = TRUE, diploid_chroms = NULL, segs_consensus_fix = NULL, use_loh = NULL, min_genes = 10,
@@ -237,7 +237,8 @@ run_numbat = function(
 
     } else if (!is.null(init_clusters)) {
 
-        log_message('Initializing from user-defined clusters with per-cluster subclustering..', verbose = verbose)
+        log_message('Initializing from user-defined clusters with global iterative splitting..', verbose = verbose)
+        log_message(glue('Target: {init_k} total subclusters, min {cells_per_subcluster} cells each'), verbose = verbose)
         log_mem()
 
         # Validate init_clusters
@@ -252,39 +253,31 @@ run_numbat = function(
 
         # Process each external cluster
         cluster_ids <- unique(init_clusters)
-        log_message(glue('Processing {length(cluster_ids)} external clusters..'), verbose = verbose)
+        n_init_clusters <- length(cluster_ids)
+        log_message(glue('Processing {n_init_clusters} external clusters..'), verbose = verbose)
 
-        all_subtrees <- list()
-        all_gexp_roll <- list()
-        subtree_id <- 1
+        # Phase 1: Run hclust for each init_cluster
+        hclust_list <- list()
+        cell_ids_list <- list()
+        gexp_roll_list <- list()
 
         for (cl in cluster_ids) {
-
             cell_ids <- names(init_clusters)[init_clusters == cl]
             n_cells <- length(cell_ids)
+            cell_ids_list[[as.character(cl)]] <- cell_ids
 
             log_message(glue('  Cluster {cl}: {n_cells} cells'), verbose = verbose)
 
-            # Determine number of subclusters based on size
-            k_sub <- max(1, ceiling(n_cells / cells_per_subcluster))
-
-            if (k_sub == 1 || n_cells < min_cells) {
-                # Too small to subcluster - use as single subtree
-                all_subtrees[[subtree_id]] <- list(
-                    cells = cell_ids,
-                    size = n_cells,
-                    sample = as.character(subtree_id),
-                    members = subtree_id
-                )
-                subtree_id <- subtree_id + 1
+            if (n_cells < cells_per_subcluster) {
+                # Too small to subcluster - will be kept as single subtree
+                hclust_list[[as.character(cl)]] <- NULL
+                log_message(glue('    -> Below minimum size, keeping as single subtree'), verbose = verbose)
                 next
             }
 
-            # Subset data for this cluster
             count_mat_sub <- count_mat[, cell_ids, drop = FALSE]
             sc_refs_sub <- sc_refs[cell_ids]
 
-            # Run expression-based hclust within this cluster
             clust_sub <- exp_hclust(
                 count_mat = count_mat_sub,
                 lambdas_ref = lambdas_ref,
@@ -294,34 +287,50 @@ run_numbat = function(
                 verbose = FALSE
             )
 
-            # Store smoothed expression for later (optional plotting)
-            all_gexp_roll[[as.character(cl)]] <- clust_sub$gexp_roll_wide
+            hclust_list[[as.character(cl)]] <- clust_sub$hc
+            gexp_roll_list[[as.character(cl)]] <- clust_sub$gexp_roll_wide
+        }
 
-            # Cut dendrogram into subclusters
-            subclust_labels <- cutree(clust_sub$hc, k = k_sub)
+        # Phase 2: Iteratively select most distinct splits globally
+        log_message('Selecting subclusters by global distinctness (merge height)..', verbose = verbose)
 
-            # Create subtrees from subclusters
-            for (subcl in unique(subclust_labels)) {
-                sub_cells <- names(subclust_labels)[subclust_labels == subcl]
-                all_subtrees[[subtree_id]] <- list(
-                    cells = sub_cells,
-                    size = length(sub_cells),
-                    sample = as.character(subtree_id),
-                    members = subtree_id
-                )
-                subtree_id <- subtree_id + 1
+        selected_subclusters <- select_subclusters_iterative(
+            hclust_list = hclust_list,
+            init_k = init_k,
+            cells_per_subcluster = cells_per_subcluster,
+            verbose = verbose
+        )
+
+        # Phase 3: Convert selected subclusters to subtrees
+        all_subtrees <- list()
+        subtree_id <- 1
+
+        for (sc in selected_subclusters) {
+            # Handle init_clusters that had no hclust (too small)
+            if (is.null(sc$cells)) {
+                sc$cells <- cell_ids_list[[sc$init_cluster]]
             }
+
+            all_subtrees[[subtree_id]] <- list(
+                cells = sc$cells,
+                size = length(sc$cells),
+                sample = as.character(subtree_id),
+                members = subtree_id
+            )
+            subtree_id <- subtree_id + 1
         }
 
         subtrees <- all_subtrees
 
+        # Log final allocation per init_cluster
+        allocation_summary <- table(sapply(selected_subclusters, `[[`, "init_cluster"))
+        log_message(glue('Final allocation: {paste(names(allocation_summary), allocation_summary, sep=":", collapse=", ")}'), verbose = verbose)
+
         # Combine and save smoothed expression from all clusters
-        if (length(all_gexp_roll) > 0) {
-            # Find common genes across all cluster matrices
-            common_genes <- Reduce(intersect, lapply(all_gexp_roll, colnames))
+        if (length(gexp_roll_list) > 0) {
+            common_genes <- Reduce(intersect, lapply(gexp_roll_list, colnames))
             if (length(common_genes) > 0) {
-                # Subset to common genes and combine
-                all_gexp_roll_common <- lapply(all_gexp_roll, function(x) x[, common_genes, drop = FALSE])
+                all_gexp_roll_common <- lapply(gexp_roll_list, function(x) x[, common_genes, drop = FALSE])
                 gexp_roll_wide <- do.call(rbind, all_gexp_roll_common)
                 fwrite(
                     as.data.frame(gexp_roll_wide) %>% tibble::rownames_to_column('cell'),
@@ -332,7 +341,7 @@ run_numbat = function(
             }
         }
 
-        log_message(glue('Created {length(subtrees)} subtrees from {length(cluster_ids)} external clusters'), verbose = verbose)
+        log_message(glue('Created {length(subtrees)} subtrees from {n_init_clusters} external clusters'), verbose = verbose)
 
     } else {
 
@@ -794,6 +803,198 @@ subtrees_equal = function(subtrees_1, subtrees_2) {
     isTRUE(all.equal(subtrees_1, subtrees_2))
 }
 
+#' Get the number of cells (leaves) under a dendrogram node
+#'
+#' In hclust, merge matrix uses negative indices for leaves and positive
+#' indices for internal nodes (previous merges).
+#'
+#' @param hc hclust object
+#' @param node_id Node identifier: negative = leaf (single cell),
+#'                positive = internal node (merge index)
+#' @return Number of cells under this node
+#' @keywords internal
+get_node_size <- function(hc, node_id) {
+    if (node_id < 0) {
+        return(1)
+    } else {
+        left <- hc$merge[node_id, 1]
+        right <- hc$merge[node_id, 2]
+        return(get_node_size(hc, left) + get_node_size(hc, right))
+    }
+}
+
+#' Get all cell indices under a dendrogram node
+#'
+#' @param hc hclust object
+#' @param node_id Node identifier
+#' @return Vector of cell indices (positions in hc$labels)
+#' @keywords internal
+get_node_members <- function(hc, node_id) {
+    if (node_id < 0) {
+        return(-node_id)
+    } else {
+        left <- hc$merge[node_id, 1]
+        right <- hc$merge[node_id, 2]
+        return(c(get_node_members(hc, left), get_node_members(hc, right)))
+    }
+}
+
+#' Check if a node can be split while respecting minimum size
+#'
+#' @param hc hclust object
+#' @param node_id Node to potentially split
+#' @param min_size Minimum cells per resulting subcluster
+#' @return List with can_split, height, left_id, right_id, left_size, right_size
+#' @keywords internal
+check_valid_split <- function(hc, node_id, min_size) {
+    if (node_id < 0) {
+        return(list(can_split = FALSE))
+    }
+
+    left_id <- hc$merge[node_id, 1]
+    right_id <- hc$merge[node_id, 2]
+    left_size <- get_node_size(hc, left_id)
+    right_size <- get_node_size(hc, right_id)
+    height <- hc$height[node_id]
+
+    can_split <- (left_size >= min_size) && (right_size >= min_size)
+
+    return(list(
+        can_split = can_split,
+        height = height,
+        left_id = left_id,
+        right_id = right_id,
+        left_size = left_size,
+        right_size = right_size
+    ))
+}
+
+#' Iteratively split subclusters to reach target k
+#'
+#' Globally selects the most distinct (highest merge height) valid split
+#' at each step until we have init_k subclusters. This ensures large
+#' init_clusters don't automatically get more subclusters - only the most
+#' distinct splits globally are selected.
+#'
+#' @param hclust_list Named list of hclust objects per init_cluster
+#' @param init_k Target total number of subclusters
+#' @param cells_per_subcluster Minimum cells per subcluster
+#' @param verbose Print progress
+#' @return List of subclusters, each with: init_cluster, node_id, cells
+#' @keywords internal
+select_subclusters_iterative <- function(hclust_list, init_k,
+                                          cells_per_subcluster, verbose = TRUE) {
+
+    n_init_clusters <- length(hclust_list)
+
+    if (init_k < n_init_clusters) {
+        stop(glue("init_k ({init_k}) must be >= number of init_clusters ({n_init_clusters})"))
+    }
+
+    # Initialize: each init_cluster starts as one subcluster (root node)
+    current_subclusters <- list()
+    for (cl in names(hclust_list)) {
+        hc <- hclust_list[[cl]]
+        if (is.null(hc)) {
+            current_subclusters[[length(current_subclusters) + 1]] <- list(
+                init_cluster = cl,
+                node_id = NA,
+                hc = NULL
+            )
+        } else {
+            n_leaves <- length(hc$labels)
+            root_id <- n_leaves - 1
+            current_subclusters[[length(current_subclusters) + 1]] <- list(
+                init_cluster = cl,
+                node_id = root_id,
+                hc = hc
+            )
+        }
+    }
+
+    # Iteratively split until we reach init_k
+    while (length(current_subclusters) < init_k) {
+
+        best_split <- NULL
+        best_height <- -Inf
+        best_idx <- NA
+
+        for (i in seq_along(current_subclusters)) {
+            sc <- current_subclusters[[i]]
+
+            if (is.null(sc$hc) || is.na(sc$node_id)) {
+                next
+            }
+
+            split_info <- check_valid_split(sc$hc, sc$node_id, cells_per_subcluster)
+
+            if (split_info$can_split && split_info$height > best_height) {
+                best_split <- split_info
+                best_height <- split_info$height
+                best_idx <- i
+                best_hc <- sc$hc
+                best_init_cluster <- sc$init_cluster
+            }
+        }
+
+        if (is.null(best_split)) {
+            stop(glue(
+                "Cannot create {init_k} subclusters: only {length(current_subclusters)} ",
+                "possible while maintaining cells_per_subcluster={cells_per_subcluster}. ",
+                "Reduce init_k or reduce cells_per_subcluster."
+            ))
+        }
+
+        # Apply the split: remove parent, add both children
+        current_subclusters[[best_idx]] <- NULL
+
+        current_subclusters[[length(current_subclusters) + 1]] <- list(
+            init_cluster = best_init_cluster,
+            node_id = best_split$left_id,
+            hc = best_hc
+        )
+
+        current_subclusters[[length(current_subclusters) + 1]] <- list(
+            init_cluster = best_init_cluster,
+            node_id = best_split$right_id,
+            hc = best_hc
+        )
+
+        if (verbose) {
+            log_message(glue(
+                "  Split in {best_init_cluster}: height={round(best_height, 3)}, ",
+                "sizes={best_split$left_size}+{best_split$right_size}, ",
+                "total subclusters={length(current_subclusters)}"
+            ))
+        }
+    }
+
+    # Convert node_ids to actual cell names
+    result <- lapply(current_subclusters, function(sc) {
+        if (is.null(sc$hc)) {
+            return(list(
+                init_cluster = sc$init_cluster,
+                cells = NULL
+            ))
+        }
+
+        if (sc$node_id < 0) {
+            cell_idx <- -sc$node_id
+            cells <- sc$hc$labels[cell_idx]
+        } else {
+            cell_indices <- get_node_members(sc$hc, sc$node_id)
+            cells <- sc$hc$labels[cell_indices]
+        }
+
+        return(list(
+            init_cluster = sc$init_cluster,
+            cells = cells
+        ))
+    })
+
+    return(result)
+}
+
 #' Run smoothed expression-based hclust
 #' @param count_mat dgCMatrix Gene counts
 #' @param lambdas_ref matrix Reference expression profiles
@@ -802,7 +1003,7 @@ subtrees_equal = function(subtrees_1, subtrees_2) {
 #' @param window integer Sliding window size
 #' @param ncores integer Number of cores
 #' @param verbose logical Verbosity
-#' @keywords internal 
+#' @keywords internal
 exp_hclust = function(count_mat, lambdas_ref, gtf, sc_refs = NULL, window = 101, ncores = 1, verbose = TRUE) {
 
     count_mat = check_matrix(count_mat)

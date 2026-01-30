@@ -19,7 +19,7 @@ run_numbat(
   alpha = 1e-04,
   eps = 1e-05,
   max_entropy = 0.5,
-  init_k = 3,
+  init_k = 20,
   min_cells = 50,
   tau = 0.3,
   nu = 1,
@@ -78,7 +78,7 @@ run_numbat(
 
 \item{max_entropy}{numeric Entropy threshold to filter CNVs}
 
-\item{init_k}{integer Number of clusters in the initial clustering}
+\item{init_k}{integer Total number of subclusters. When init_clusters is provided, subclusters are selected globally based on distinctness (Ward's merge height). When init_clusters is NULL, this is the number of clusters in expression-based initialization.}
 
 \item{min_cells}{integer Minimum number of cells to run HMM on}
 
@@ -130,9 +130,9 @@ run_numbat(
 
 \item{exclude_neu}{logical Whether to exclude neutral segments from CNV retesting (internal use only)}
 
-\item{init_clusters}{named vector User-provided external cluster labels (e.g., from Seurat/scanpy). Names should be cell IDs and values should be cluster IDs. When provided, hierarchical clustering is performed within each external cluster separately.}
+\item{init_clusters}{named vector User-provided external cluster labels (e.g., from Seurat/scanpy). Names should be cell IDs and values should be cluster IDs. When provided, subclusters are selected globally from all init_clusters based on distinctness.}
 
-\item{cells_per_subcluster}{integer Target number of cells per subcluster when using init_clusters. Determines k for cutting the dendrogram within each external cluster.}
+\item{cells_per_subcluster}{integer Minimum number of cells per subcluster. Subclusters with fewer cells will not be created, ensuring robust downstream analysis.}
 }
 \value{
 a status code
