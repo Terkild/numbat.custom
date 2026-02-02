@@ -26,7 +26,7 @@ NULL
 #' @param count_mat dgCMatrix Raw count matrices where rownames are genes and column names are cells
 #' @param lambdas_ref matrix Either a named vector with gene names as names and normalized expression as values, or a matrix where rownames are genes and columns are pseudobulk names
 #' @param df_allele dataframe Allele counts per cell, produced by preprocess_allele
-#' @param gtf dataframe Transcript GTF, if NULL will use the default GTF for the specified genome 
+#' @param gtf dataframe Transcript GTF, if NULL will use the default GTF for the specified genome
 #' @param genome character Genome version (hg38, hg19, or mm10)
 #' @param out_dir string Output directory
 #' @param gamma numeric Dispersion parameter for the Beta-Binomial allele model
@@ -42,10 +42,10 @@ NULL
 #' @param min_overlap numeric Minimum CNV overlap threshold
 #' @param max_iter integer Maximum number of iterations to run the phyologeny optimization
 #' @param max_nni integer Maximum number of iterations to run NNI in the ML phylogeny inference
-#' @param min_depth integer Minimum allele depth 
+#' @param min_depth integer Minimum allele depth
 #' @param plot_min_depth integer Minimum allele depth to plot in pseudobulk HMM
 #' @param common_diploid logical Whether to find common diploid regions in a group of peusdobulks
-#' @param ncores integer Number of threads to use 
+#' @param ncores integer Number of threads to use
 #' @param ncores_nni integer Number of threads to use for NNI
 #' @param max_entropy numeric Entropy threshold to filter CNVs
 #' @param min_LLR numeric Minimum LLR to filter CNVs
@@ -58,7 +58,7 @@ NULL
 #' @param segs_loh dataframe Segments of clonal LOH to be excluded
 #' @param call_clonal_loh logical Whether to call segments with clonal LOH
 #' @param segs_consensus_fix dataframe Pre-determined segmentation of consensus CNVs
-#' @param check_convergence logical Whether to terminate iterations based on consensus CNV convergence 
+#' @param check_convergence logical Whether to terminate iterations based on consensus CNV convergence
 #' @param random_init logical Whether to initiate phylogney using a random tree (internal use only)
 #' @param exclude_neu logical Whether to exclude neutral segments from CNV retesting (internal use only)
 #' @param plot logical Whether to plot results
@@ -95,18 +95,18 @@ run_numbat = function(
             gtf = gtf_mm10
         } else {
             stop('Genome version must be hg38, hg19, or mm10')
-        } 
+        }
     } else{
         gtf = check_gtf_input(gtf)
     }
-    
+
     count_mat = check_matrix(count_mat)
     df_allele = annotate_genes(df_allele, gtf)
     df_allele = check_allele_df(df_allele)
     lambdas_ref = check_exp_ref(lambdas_ref)
 
     # filter for annotated genes
-    genes_annotated = unique(gtf$gene) %>% 
+    genes_annotated = unique(gtf$gene) %>%
         intersect(rownames(count_mat)) %>%
         intersect(rownames(lambdas_ref))
 
@@ -147,10 +147,10 @@ run_numbat = function(
         glue('scistreer version: ', as.character(utils::packageVersion("scistreer"))),
         glue('hahmmr version: ', as.character(utils::packageVersion("hahmmr"))),
         'Running under parameters:',
-        glue('t = {t}'), 
+        glue('t = {t}'),
         glue('alpha = {alpha}'),
         glue('gamma = {gamma}'),
-        glue('min_cells = {min_cells}'), 
+        glue('min_cells = {min_cells}'),
         glue('init_k = {init_k}'),
         glue('max_cost = {max_cost}'),
         glue('n_cut = {n_cut}'),
@@ -191,7 +191,7 @@ run_numbat = function(
     ######## Initialization ########
 
     if (call_clonal_loh) {
-        
+
         log_message('Calling segments with clonal LOH')
 
         bulk = get_bulk(
@@ -379,7 +379,7 @@ run_numbat = function(
                 gtf = gtf,
                 n_sample = 1e4
             )
-        
+
             ggsave(glue('{out_dir}/exp_roll_clust.png'), p, width = 8, height = 4, dpi = 200)
 
         }
@@ -407,7 +407,7 @@ run_numbat = function(
         bulk_subtrees = make_group_bulks(
                 groups = subtrees,
                 count_mat = count_mat,
-                df_allele = df_allele, 
+                df_allele = df_allele,
                 lambdas_ref = lambdas_ref,
                 gtf = gtf,
                 min_depth = min_depth,
@@ -436,19 +436,19 @@ run_numbat = function(
                     verbose = verbose)
 
             fwrite(bulk_subtrees, glue('{out_dir}/bulk_subtrees_{i}.tsv.gz'), sep = '\t')
-            
+
             if (plot) {
                 p = plot_bulks(bulk_subtrees, min_LLR = min_LLR, use_pos = TRUE, genome = genome, min_depth = plot_min_depth)
                 ggsave(
-                    glue('{out_dir}/bulk_subtrees_{i}.png'), p, 
+                    glue('{out_dir}/bulk_subtrees_{i}.png'), p,
                     width = 13, height = 2*length(unique(bulk_subtrees$sample)), dpi = 250
                 )
             }
 
             # define consensus CNVs
-            segs_consensus = bulk_subtrees %>% 
+            segs_consensus = bulk_subtrees %>%
                 get_segs_consensus(min_LLR = min_LLR, min_overlap = min_overlap, retest = TRUE)
-            
+
             # check termination
             if (all(segs_consensus$cnv_state_post == 'neu')) {
                 msg = 'No CNV remains after filtering by LLR in pseudobulks. Consider reducing min_LLR.'
@@ -459,15 +459,15 @@ run_numbat = function(
             # retest all segments on subtrees
             bulk_subtrees = retest_bulks(
                     bulk_subtrees,
-                    segs_consensus, 
-                    diploid_chroms = diploid_chroms, 
+                    segs_consensus,
+                    diploid_chroms = diploid_chroms,
                     gamma = gamma,
                     min_LLR = min_LLR,
                     ncores = ncores
                 )
 
             fwrite(bulk_subtrees, glue('{out_dir}/bulk_subtrees_retest_{i}.tsv.gz'), sep = '\t')
-            
+
             # find consensus CNVs again
             segs_consensus = bulk_subtrees %>%
                 get_segs_consensus(min_LLR = min_LLR, min_overlap = min_overlap, retest = FALSE)
@@ -484,7 +484,7 @@ run_numbat = function(
             log_message('Using fixed consensus CNVs')
             segs_consensus = segs_consensus_fix
 
-            bulk_subtrees = bulk_subtrees %>% 
+            bulk_subtrees = bulk_subtrees %>%
                 annot_consensus(segs_consensus) %>%
                 annot_theta_mle() %>%
                 classify_alleles()
@@ -503,7 +503,7 @@ run_numbat = function(
         bulk_clones = make_group_bulks(
                 groups = clones,
                 count_mat = count_mat,
-                df_allele = df_allele, 
+                df_allele = df_allele,
                 lambdas_ref = lambdas_ref,
                 gtf = gtf,
                 min_depth = min_depth,
@@ -511,7 +511,7 @@ run_numbat = function(
                 segs_loh = segs_loh,
                 ncores = ncores)
 
-        bulk_clones = bulk_clones %>% 
+        bulk_clones = bulk_clones %>%
             run_group_hmms(
                 t = t,
                 gamma = gamma,
@@ -532,13 +532,13 @@ run_numbat = function(
             min_LLR = min_LLR,
             diploid_chroms = diploid_chroms,
             ncores = ncores)
-        
+
         fwrite(bulk_clones, glue('{out_dir}/bulk_clones_{i}.tsv.gz'), sep = '\t')
 
         if (plot) {
             p = plot_bulks(bulk_clones, min_LLR = min_LLR, use_pos = TRUE, genome = genome, min_depth = plot_min_depth)
             ggsave(
-                glue('{out_dir}/bulk_clones_{i}.png'), p, 
+                glue('{out_dir}/bulk_clones_{i}.png'), p,
                 width = 13, height = 2*length(unique(bulk_clones$sample)), dpi = 250
             )
         }
@@ -549,7 +549,7 @@ run_numbat = function(
         }
 
         fwrite(segs_consensus, glue('{out_dir}/segs_consensus_{i}.tsv'), sep = '\t')
-        
+
         ######## Evaluate CNV per cell ########
         log_message('Evaluating CNV per cell ..', verbose = verbose)
         log_mem()
@@ -570,8 +570,8 @@ run_numbat = function(
         )
 
         allele_post = get_allele_post(
-            df_allele, 
-            haplotype_post, 
+            df_allele,
+            haplotype_post,
             segs_consensus %>% mutate(cnv_state = ifelse(cnv_state == 'neu', cnv_state, cnv_state_post))
         )
 
@@ -696,7 +696,7 @@ run_numbat = function(
                 line_width = 0.1,
                 clone_bar = TRUE
             )
-        
+
             ggsave(glue('{out_dir}/panel_{i}.png'), panel, width = 7.5, height = 3.75, dpi = 250)
 
         }
@@ -707,8 +707,8 @@ run_numbat = function(
         subtrees = lapply(1:vcount(G_m), function(c) {
 
             nodes = na.omit(igraph::dfs(G_m, root = c, unreachable = F)$order)
-            
-            G_m %>% 
+
+            G_m %>%
             igraph::as_data_frame('vertices') %>%
             filter(id %in% nodes) %>%
             inner_join(clone_post, by = c('GT' = 'GT_opt')) %>%
@@ -741,7 +741,7 @@ run_numbat = function(
     bulk_clones = make_group_bulks(
         groups = clones,
         count_mat = count_mat,
-        df_allele = df_allele, 
+        df_allele = df_allele,
         lambdas_ref = lambdas_ref,
         gtf = gtf,
         min_depth = min_depth,
@@ -749,7 +749,7 @@ run_numbat = function(
         segs_loh = segs_loh,
         ncores = ncores)
 
-    bulk_clones = bulk_clones %>% 
+    bulk_clones = bulk_clones %>%
         run_group_hmms(
             t = t,
             gamma = gamma,
@@ -770,33 +770,33 @@ run_numbat = function(
         min_LLR = min_LLR,
         diploid_chroms = diploid_chroms,
         ncores = ncores)
-    
+
     fwrite(bulk_clones, glue('{out_dir}/bulk_clones_final.tsv.gz'), sep = '\t')
 
     if (plot) {
         p = plot_bulks(bulk_clones, min_LLR = min_LLR, use_pos = TRUE, genome = genome, min_depth = plot_min_depth)
         ggsave(
-            glue('{out_dir}/bulk_clones_final.png'), p, 
+            glue('{out_dir}/bulk_clones_final.png'), p,
             width = 13, height = 2*length(unique(bulk_clones$sample)), dpi = 250
         )
     }
-    
+
     log_message('All done!')
 
     return('Success')
 }
 
 segs_equal = function(segs_1, segs_2) {
-    
+
     cols = c('CHROM', 'seg', 'seg_start', 'seg_end', 'cnv_state_post')
-    
+
     equal = isTRUE(all.equal(
-        segs_1 %>% select(any_of(cols)), 
+        segs_1 %>% select(any_of(cols)),
         segs_2 %>% select(any_of(cols))
     ))
-    
+
     return(equal)
-    
+
 }
 
 subtrees_equal = function(subtrees_1, subtrees_2) {
@@ -1007,7 +1007,7 @@ select_subclusters_iterative <- function(hclust_list, init_k,
 exp_hclust = function(count_mat, lambdas_ref, gtf, sc_refs = NULL, window = 101, ncores = 1, verbose = TRUE) {
 
     count_mat = check_matrix(count_mat)
-    
+
     if (is.null(sc_refs)) {
         sc_refs = choose_ref_cor(count_mat, lambdas_ref, gtf)
     }
@@ -1045,9 +1045,9 @@ exp_hclust = function(count_mat, lambdas_ref, gtf, sc_refs = NULL, window = 101,
 #' @param segs_loh dataframe Segments with clonal LOH to be excluded
 #' @param ncores integer Number of cores
 #' @return dataframe Pseudobulk profiles
-#' @keywords internal 
+#' @keywords internal
 make_group_bulks = function(groups, count_mat, df_allele, lambdas_ref, gtf, min_depth = 0, nu = 1, segs_loh = NULL, ncores = NULL) {
-    
+
     if (length(groups) == 0) {
         return(data.frame())
     }
@@ -1083,7 +1083,7 @@ make_group_bulks = function(groups, count_mat, df_allele, lambdas_ref, gtf, min_
     }
 
     # unify marker index
-    bulks = results %>% 
+    bulks = results %>%
         bind_rows() %>%
         arrange(CHROM, POS) %>%
         mutate(snp_id = factor(snp_id, unique(snp_id))) %>%
@@ -1093,17 +1093,18 @@ make_group_bulks = function(groups, count_mat, df_allele, lambdas_ref, gtf, min_
     return(bulks)
 }
 
-#' Run multiple HMMs 
+#' Run multiple HMMs
 #' @param bulks dataframe Pseudobulk profiles
 #' @param gamma numeric Dispersion parameter for the Beta-Binomial allele model
 #' @param t numeric Transition probability
 #' @param alpha numeric P value cut-off to determine segment clusters in find_diploid
 #' @param common_diploid logical Whether to find common diploid regions between pseudobulks
-#' @param diploid_chroms character vector Known diploid chromosomes to use as baseline 
+#' @param diploid_chroms character vector Known diploid chromosomes to use as baseline
 #' @param retest logcial Whether to retest CNVs
 #' @param run_hmm logical Whether to run HMM segments or just retest
 #' @param ncores integer Number of cores
 #' @param allele_only logical Whether only use allele data to run HMM
+#' @export
 #' @keywords internal
 run_group_hmms = function(
     bulks, t = 1e-4, gamma = 20, alpha = 1e-4, min_genes = 10, nu = 1,
@@ -1140,19 +1141,19 @@ run_group_hmms = function(
         function(bulk) {
             bulk %>% analyze_bulk(
                 t = t,
-                gamma = gamma, 
+                gamma = gamma,
                 nu = nu,
-                find_diploid = find_diploid, 
+                find_diploid = find_diploid,
                 run_hmm = run_hmm,
-                allele_only = allele_only, 
+                allele_only = allele_only,
                 diploid_chroms = diploid_chroms,
                 min_genes = min_genes,
-                retest = retest, 
+                retest = retest,
                 verbose = verbose,
                 exclude_neu = exclude_neu
             )
     })
-                
+
     bad = sapply(results, inherits, what = "try-error")
 
     if (any(bad)) {
@@ -1173,7 +1174,7 @@ run_group_hmms = function(
 
 #' Extract consensus CNV segments
 #' @param bulks dataframe Pseudobulks
-#' @param min_LLR numeric LLR threshold to filter CNVs 
+#' @param min_LLR numeric LLR threshold to filter CNVs
 #' @param min_overlap numeric Minimum overlap fraction to determine count two events as as overlapping
 #' @return dataframe Consensus segments
 #' @keywords internal
@@ -1185,12 +1186,12 @@ get_segs_consensus = function(bulks, min_LLR = 5, min_overlap = 0.45, retest = T
 
     info_cols = c('sample', 'CHROM', 'seg', 'cnv_state', 'cnv_state_post',
             'seg_start', 'seg_end', 'seg_start_index', 'seg_end_index',
-            'theta_mle', 'theta_sigma', 'phi_mle', 'phi_sigma', 
+            'theta_mle', 'theta_sigma', 'phi_mle', 'phi_sigma',
             'p_loh', 'p_del', 'p_amp', 'p_bamp', 'p_bdel',
             'LLR', 'LLR_y', 'LLR_x', 'n_genes', 'n_snps')
 
     # all possible aberrant segments
-    segs_all = bulks %>% 
+    segs_all = bulks %>%
         group_by(sample, seg, CHROM) %>%
         mutate(seg_start = min(POS), seg_end = max(POS)) %>%
         filter(seg_start != seg_end) %>%
@@ -1200,7 +1201,7 @@ get_segs_consensus = function(bulks, min_LLR = 5, min_overlap = 0.45, retest = T
         mutate(cnv_state = ifelse(LLR < min_LLR | is.na(LLR), 'neu', cnv_state))
 
     # confident aberrant segments
-    segs_star = segs_all %>% 
+    segs_star = segs_all %>%
         filter(cnv_state != 'neu') %>%
         resolve_cnvs(
             min_overlap = min_overlap
@@ -1209,7 +1210,7 @@ get_segs_consensus = function(bulks, min_LLR = 5, min_overlap = 0.45, retest = T
     if (retest) {
 
         # union of all aberrant segs
-        segs_cnv = segs_all %>% 
+        segs_cnv = segs_all %>%
             filter(cnv_state != 'neu') %>%
             arrange(CHROM) %>%
             {GenomicRanges::GRanges(
@@ -1223,13 +1224,13 @@ get_segs_consensus = function(bulks, min_LLR = 5, min_overlap = 0.45, retest = T
 
         # segs to be retested
         segs_retest = GenomicRanges::setdiff(
-            segs_cnv %>% 
+            segs_cnv %>%
                 {GenomicRanges::GRanges(
                     seqnames = .$CHROM,
                     IRanges::IRanges(start = .$seg_start,
                         end = .$seg_end)
             )},
-            segs_star %>% 
+            segs_star %>%
                 {GenomicRanges::GRanges(
                     seqnames = .$CHROM,
                     IRanges::IRanges(start = .$seg_start,
@@ -1259,20 +1260,20 @@ get_segs_consensus = function(bulks, min_LLR = 5, min_overlap = 0.45, retest = T
         as.data.frame() %>%
         select(CHROM = seqnames, seg_start = start, seg_end = end) %>%
         mutate(seg_length = seg_end - seg_start)
-    
+
     if (all(segs_all$cnv_state == 'neu')){
-        segs_neu = segs_neu %>% 
+        segs_neu = segs_neu %>%
             arrange(CHROM) %>%
             group_by(CHROM) %>%
             mutate(
                 seg = paste0(CHROM, generate_postfix(1:n())),
-                cnv_state = 'neu', 
+                cnv_state = 'neu',
                 cnv_state_post = 'neu'
-            ) %>% 
+            ) %>%
             ungroup()
         return(segs_neu)
     }
-    
+
     segs_consensus = bind_rows(segs_star, segs_retest) %>%
         fill_neu_segs(segs_neu) %>%
         mutate(cnv_state_post = ifelse(cnv_state == 'neu', cnv_state, cnv_state_post))
@@ -1287,16 +1288,16 @@ get_segs_consensus = function(bulks, min_LLR = 5, min_overlap = 0.45, retest = T
 #' @return dataframe Collections of neutral and aberrant segments with no gaps
 #' @keywords internal
 fill_neu_segs = function(segs_consensus, segs_neu) {
-    
+
     # take complement of consensus aberrant segs
     gaps = GenomicRanges::setdiff(
-        segs_neu %>% 
+        segs_neu %>%
             {GenomicRanges::GRanges(
                 seqnames = .$CHROM,
                 IRanges::IRanges(start = .$seg_start,
                     end = .$seg_end)
         )},
-        segs_consensus %>% 
+        segs_consensus %>%
             {GenomicRanges::GRanges(
                 seqnames = .$CHROM,
                 IRanges::IRanges(start = .$seg_start,
@@ -1311,7 +1312,7 @@ fill_neu_segs = function(segs_consensus, segs_neu) {
 
     segs_consensus = segs_consensus %>%
         mutate(seg_length = seg_end - seg_start) %>%
-        bind_rows(gaps) %>% 
+        bind_rows(gaps) %>%
         mutate(cnv_state = tidyr::replace_na(cnv_state, 'neu')) %>%
         arrange(CHROM, seg_start) %>%
         group_by(CHROM) %>%
@@ -1319,7 +1320,7 @@ fill_neu_segs = function(segs_consensus, segs_neu) {
         ungroup() %>%
         mutate(CHROM = factor(CHROM, 1:22)) %>%
         arrange(CHROM)
-    
+
     return(segs_consensus)
 }
 
@@ -1333,17 +1334,17 @@ get_clone_post = function(gtree, exp_post, allele_post) {
 
     clones = gtree %>%
         activate(nodes) %>%
-        data.frame() %>% 
+        data.frame() %>%
         # mutate(GT = ifelse(compartment == 'normal', '', GT)) %>%
         group_by(GT, clone, compartment) %>%
         summarise(
             clone_size = sum(leaf),
             .groups = 'drop'
         )
-    
+
     # add the normal genotype if not in the tree
     if (min(clones$clone) > 1) {
-        clones = clones %>% 
+        clones = clones %>%
             add_row(.before = 1, GT = '', clone = 1, compartment = 'normal', clone_size = 0)
     }
 
@@ -1358,7 +1359,7 @@ get_clone_post = function(gtree, exp_post, allele_post) {
             seg,
             tidyr::nesting(GT, clone, compartment, prior_clone, clone_size),
             fill = list('I' = 0)
-        ) %>% 
+        ) %>%
         filter(seg != '')
 
     clone_post = full_join(
@@ -1404,7 +1405,7 @@ get_clone_post = function(gtree, exp_post, allele_post) {
         data.table::dcast(cell + clone_opt + GT_opt + p_opt ~ clone, value.var = c('p', 'p_x', 'p_y')) %>%
         as.data.frame()
 
-    tumor_clones = clones %>% 
+    tumor_clones = clones %>%
         filter(compartment == 'tumor') %>%
         pull(clone)
 
@@ -1413,22 +1414,22 @@ get_clone_post = function(gtree, exp_post, allele_post) {
     clone_post['p_cnv_y'] = clone_post[paste0('p_y_', tumor_clones)] %>% rowSums
 
     clone_post = clone_post %>% mutate(compartment_opt = ifelse(p_cnv > 0.5, 'tumor', 'normal'))
-    
+
     return(clone_post)
-    
+
 }
 
 #' Get unique CNVs from set of segments
 #' @param segs_all dataframe CNV segments from multiple samples
 #' @param min_overlap numeric scalar Minimum overlap fraction to determine count two events as as overlapping
 #' @return dataframe Consensus CNV segments
-#' @keywords internal 
+#' @keywords internal
 resolve_cnvs = function(segs_all, min_overlap = 0.5, debug = FALSE) {
 
     if (nrow(segs_all) == 0) {
         return(segs_all)
     }
-            
+
     V = segs_all %>% ungroup() %>% mutate(vertex = 1:n(), .before = 1)
 
     E = segs_all %>% {GenomicRanges::GRanges(
@@ -1438,7 +1439,7 @@ resolve_cnvs = function(segs_all, min_overlap = 0.5, debug = FALSE) {
         )} %>%
         GenomicRanges::findOverlaps(., .) %>%
         as.data.frame %>%
-        setNames(c('from', 'to')) %>% 
+        setNames(c('from', 'to')) %>%
         filter(from != to) %>%
         rowwise() %>%
         mutate(vp = paste0(sort(c(from, to)), collapse = ',')) %>%
@@ -1446,7 +1447,7 @@ resolve_cnvs = function(segs_all, min_overlap = 0.5, debug = FALSE) {
         distinct(vp, .keep_all = TRUE)
 
     # cut some edges with weak overlaps
-    E = E %>% 
+    E = E %>%
         left_join(
             V %>% select(from = vertex, start_x = seg_start_index, end_x = seg_end_index),
             by = 'from'
@@ -1476,11 +1477,11 @@ resolve_cnvs = function(segs_all, min_overlap = 0.5, debug = FALSE) {
 
     segs_consensus = segs_consensus %>% arrange(CHROM, seg_start) %>%
         mutate(CHROM = factor(CHROM, 1:22))
-    
+
     if (debug) {
         return(list('G' = G, 'segs_consensus' = segs_consensus))
     }
-    
+
     return(segs_consensus)
 }
 
@@ -1491,9 +1492,9 @@ resolve_cnvs = function(segs_all, min_overlap = 0.5, debug = FALSE) {
 #' @return dataframe Single-cell CNV likelihood scores
 #' @keywords internal
 get_exp_likelihoods = function(exp_counts, diploid_chroms = NULL, use_loh = FALSE, depth_obs = NULL, mu = NULL, sigma = NULL) {
-    
+
     exp_counts = exp_counts %>% filter(!is.na(Y_obs)) %>% filter(lambda_ref > 0)
-    
+
     if (is.null(depth_obs)){
         depth_obs = sum(exp_counts$Y_obs)
     }
@@ -1517,7 +1518,7 @@ get_exp_likelihoods = function(exp_counts, diploid_chroms = NULL, use_loh = FALS
         sigma = fit[2]
     }
 
-    res = exp_counts %>% 
+    res = exp_counts %>%
         filter(cnv_state != 'neu') %>%
         group_by(CHROM, seg, cnv_state) %>%
         summarise(
@@ -1535,7 +1536,7 @@ get_exp_likelihoods = function(exp_counts, diploid_chroms = NULL, use_loh = FALS
             sigma = UQ(sigma),
             .groups = 'drop'
         )
-        
+
     return(res)
 }
 
@@ -1552,7 +1553,7 @@ get_exp_sc = function(segs_consensus, count_mat, gtf, segs_loh = NULL) {
                 seqnames = .$CHROM,
                 IRanges::IRanges(start = .$gene_start,
                        end = .$gene_end)
-            )}, 
+            )},
             segs_consensus %>% {GenomicRanges::GRanges(
                 seqnames = .$CHROM,
                 IRanges::IRanges(start = .$seg_start,
@@ -1570,12 +1571,12 @@ get_exp_sc = function(segs_consensus, count_mat, gtf, segs_loh = NULL) {
             segs_consensus %>% mutate(seg_index = 1:n()),
             by = c('seg_index', 'CHROM')
         ) %>%
-        distinct(gene, `.keep_all` = TRUE) 
+        distinct(gene, `.keep_all` = TRUE)
 
     exp_sc = count_mat %>%
         as.matrix() %>%
         as.data.frame() %>%
-        tibble::rownames_to_column('gene') %>% 
+        tibble::rownames_to_column('gene') %>%
         inner_join(
             gene_seg %>% select(CHROM, gene, seg = seg_cons, seg_start, seg_end, gene_start, cnv_state),
             by = "gene"
@@ -1602,32 +1603,32 @@ exclude_loh = function(exp_sc, segs_loh = NULL) {
         exp_sc = exp_sc %>% mutate(loh = FALSE)
     } else {
         log_message('Excluding clonal LOH regions .. ')
-        
+
         genes_loh = GenomicRanges::findOverlaps(
                 exp_sc %>% {GenomicRanges::GRanges(
                     seqnames = .$CHROM,
                     IRanges::IRanges(start = .$gene_start,
                         end = .$gene_start)
-                )}, 
+                )},
                 segs_loh %>% {GenomicRanges::GRanges(
                     seqnames = .$CHROM,
                     IRanges::IRanges(start = .$seg_start,
                         end = .$seg_end)
                 )}
             ) %>%
-            as.data.frame() %>% 
+            as.data.frame() %>%
             setNames(c('gene_index', 'seg_index')) %>%
             left_join(
                 exp_sc %>% mutate(gene_index = 1:n()),
                 by = c('gene_index')
             ) %>%
             pull(gene)
-        
-        exp_sc = exp_sc %>% mutate(loh = gene %in% genes_loh) 
+
+        exp_sc = exp_sc %>% mutate(loh = gene %in% genes_loh)
     }
-    
+
     return(exp_sc)
-    
+
 }
 
 #' compute single-cell expression posteriors
@@ -1651,7 +1652,7 @@ get_exp_post = function(segs_consensus, count_mat, gtf, lambdas_ref, sc_refs = N
     } else if (use_loh) {
         log_message('Including LOH in baseline as specified')
     }
-    
+
     if (is.null(sc_refs)) {
         sc_refs = choose_ref_cor(count_mat, lambdas_ref, gtf)
     }
@@ -1662,7 +1663,7 @@ get_exp_post = function(segs_consensus, count_mat, gtf, lambdas_ref, sc_refs = N
         cells,
         mc.cores = ncores,
         function(cell) {
-   
+
             ref = sc_refs[cell]
 
             exp_sc = exp_sc[,c('gene', 'seg', 'CHROM', 'cnv_state', 'loh', 'seg_start', 'seg_end', cell)] %>%
@@ -1692,14 +1693,14 @@ get_exp_post = function(segs_consensus, count_mat, gtf, lambdas_ref, sc_refs = N
     } else {
         log_message('All cells succeeded')
     }
-    
+
     exp_post = results[!bad] %>%
         bind_rows() %>%
         mutate(seg = factor(seg, mixedsort(unique(seg)))) %>%
         left_join(
             segs_consensus %>% select(
-                CHROM, 
-                seg = seg_cons, 
+                CHROM,
+                seg = seg_cons,
                 seg_start,
                 seg_end,
                 prior_loh = p_loh, prior_amp = p_amp, prior_del = p_del, prior_bamp = p_bamp, prior_bdel = p_bdel
@@ -1714,7 +1715,7 @@ get_exp_post = function(segs_consensus, count_mat, gtf, lambdas_ref, sc_refs = N
         compute_posterior() %>%
         mutate(seg_label = paste0(seg, '(', cnv_state, ')')) %>%
         mutate(seg_label = factor(seg_label, unique(seg_label)))
-    
+
     return(exp_post)
 }
 
@@ -1723,7 +1724,7 @@ get_exp_post = function(segs_consensus, count_mat, gtf, lambdas_ref, sc_refs = N
 #' @return dataframe Posteriors
 #' @keywords internal
 compute_posterior = function(PL) {
-    PL %>% 
+    PL %>%
     rowwise() %>%
     mutate(
         Z_amp = logSumExp(c(l21 + log(prior_amp/4), l31 + log(prior_amp/4))),
@@ -1759,7 +1760,7 @@ compute_posterior = function(PL) {
 #' @return dataframe Posterior haplotypes
 #' @keywords internal
 get_haplotype_post = function(bulks, segs_consensus, naive = FALSE) {
-    
+
     # add sample column if only one sample
     if ((!'sample' %in% colnames(bulks)) | (!'sample' %in% colnames(segs_consensus))) {
         bulks['sample'] = '0'
@@ -1770,11 +1771,11 @@ get_haplotype_post = function(bulks, segs_consensus, naive = FALSE) {
     if (all(segs_consensus$cnv_state_post == 'neu')) {
         stop('No CNVs')
     }
-    
+
     if (naive) {
         bulks = bulks %>% mutate(haplo_post = ifelse(AR >= 0.5, 'major', 'minor'))
     }
-    
+
     haplotypes = bulks %>%
         filter(!is.na(pAD)) %>%
         select(CHROM, seg, snp_id, sample, haplo_post) %>%
@@ -1783,7 +1784,7 @@ get_haplotype_post = function(bulks, segs_consensus, naive = FALSE) {
             by = c('sample', 'CHROM', 'seg')
         ) %>%
         select(CHROM, seg = seg_cons, cnv_state, snp_id, haplo_post)
-    
+
     return(haplotypes)
 }
 
@@ -1794,7 +1795,7 @@ get_haplotype_post = function(bulks, segs_consensus, naive = FALSE) {
 #' @return dataframe Allele posteriors
 #' @keywords internal
 get_allele_post = function(df_allele, haplotypes, segs_consensus) {
-    
+
     allele_counts = df_allele %>%
         mutate(pAD = ifelse(GT == '1|0', AD, DP - AD)) %>%
         inner_join(
@@ -1807,7 +1808,7 @@ get_allele_post = function(df_allele, haplotypes, segs_consensus) {
             minor_count = DP - major_count,
             MAF = major_count/DP
         ) %>%
-        group_by(cell, CHROM) %>% 
+        group_by(cell, CHROM) %>%
         arrange(cell, CHROM, POS) %>%
         mutate(
             n_chrom_snp = n(),
@@ -1815,7 +1816,7 @@ get_allele_post = function(df_allele, haplotypes, segs_consensus) {
         ) %>%
         ungroup() %>%
         filter(inter_snp_dist > 250 | is.na(inter_snp_dist))
-    
+
     allele_post = allele_counts %>%
         group_by(cell, CHROM, seg, cnv_state) %>%
         summarise(
@@ -1862,16 +1863,16 @@ get_allele_post = function(df_allele, haplotypes, segs_consensus) {
 #' @return dataframe Joint single-cell CNV posteriors
 #' @keywords internal
 get_joint_post = function(exp_post, allele_post, segs_consensus) {
-    
+
     joint_post = full_join(
             exp_post %>%
                 filter(cnv_state != 'neu') %>%
                 select(
-                    any_of(c('cell', 'CHROM', 'seg', 'cnv_state', 
+                    any_of(c('cell', 'CHROM', 'seg', 'cnv_state',
                     'l11_x' = 'l11', 'l20_x' = 'l20', 'l10_x' = 'l10', 'l21_x' = 'l21', 'l31_x' = 'l31', 'l22_x' = 'l22', 'l00_x' = 'l00',
                     'Z_x' = 'Z', 'Z_cnv_x' = 'Z_cnv', 'Z_n_x' = 'Z_n', 'logBF_x' = 'logBF'))
                 ),
-            allele_post %>% 
+            allele_post %>%
                 select(
                     any_of(c('cell', 'CHROM', 'seg', 'cnv_state',
                     'l11_y' = 'l11', 'l20_y' = 'l20', 'l10_y' = 'l10', 'l21_y' = 'l21', 'l31_y' = 'l31', 'l22_y' = 'l22', 'l00_y' = 'l00',
@@ -1914,11 +1915,11 @@ get_joint_post = function(exp_post, allele_post, segs_consensus) {
         ) %>%
         ungroup()
 
-    joint_post = joint_post %>% 
+    joint_post = joint_post %>%
         mutate(seg = factor(seg, mixedsort(unique(seg)))) %>%
         mutate(seg_label = paste0(seg, '(', cnv_state, ')')) %>%
         mutate(seg_label = factor(seg_label, unique(seg_label)))
-    
+
     return(joint_post)
 }
 
@@ -1927,8 +1928,8 @@ get_joint_post = function(exp_post, allele_post, segs_consensus) {
 #' @param segs_consensus dataframe Consensus segments
 #' @param use_loh logical Whether to use loh in the baseline
 #' @param diploid_chroms vector User-provided diploid chromosomes
-#' @return dataframe Retested pseudobulks 
-#' @keywords internal 
+#' @return dataframe Retested pseudobulks
+#' @keywords internal
 retest_bulks = function(bulks, segs_consensus = NULL,
     t = 1e-5, min_genes = 10, gamma = 20, nu = 1,
     use_loh = FALSE, diploid_chroms = NULL, ncores = 1, exclude_neu = TRUE, min_LLR = 5) {
@@ -1953,20 +1954,20 @@ retest_bulks = function(bulks, segs_consensus = NULL,
     } else {
         ref_states = c('neu')
     }
-    
+
     bulks = bulks %>% annot_consensus(segs_consensus)
-    
+
     if (!is.null(diploid_chroms)) {
         bulks = bulks %>% mutate(diploid = CHROM %in% diploid_chroms)
     } else {
         bulks = bulks %>% mutate(diploid = cnv_state %in% ref_states)
     }
-    
+
     # retest CNVs
-    bulks = bulks %>% 
+    bulks = bulks %>%
         run_group_hmms(
-            t = t, 
-            gamma = gamma, 
+            t = t,
+            gamma = gamma,
             nu = nu,
             min_genes = min_genes,
             run_hmm = FALSE,
@@ -1988,12 +1989,12 @@ retest_bulks = function(bulks, segs_consensus = NULL,
 #' @param min_LLR numeric CNV LLR threshold to filter events
 #' @param p_min numeric Probability threshold to call multi-allelic events
 #' @return dataframe Consensus segments annotated with multi-allelic events
-#' @keywords internal 
+#' @keywords internal
 test_multi_allelic = function(bulks, segs_consensus, min_LLR = 5, p_min = 0.999) {
 
     log_message('Testing for multi-allelic CNVs ..')
-    
-    segs_multi = bulks %>% 
+
+    segs_multi = bulks %>%
         distinct(sample, CHROM, seg_cons, LLR, p_amp, p_del, p_bdel, p_loh, p_bamp, cnv_state_post) %>%
         rowwise() %>%
         mutate(p_max = max(c(p_amp, p_del, p_bdel, p_loh, p_bamp))) %>%
@@ -2029,7 +2030,7 @@ test_multi_allelic = function(bulks, segs_consensus, min_LLR = 5, p_min = 0.999)
             ) %>%
             ungroup()
     } else {
-        segs_consensus = segs_consensus %>% 
+        segs_consensus = segs_consensus %>%
             mutate(
                 n_states = ifelse(cnv_state == 'neu', 0, 1),
                 cnv_states = cnv_state
@@ -2038,7 +2039,7 @@ test_multi_allelic = function(bulks, segs_consensus, min_LLR = 5, p_min = 0.999)
 
     segs_consensus = segs_consensus %>%
         mutate(cnv_states = unlist(purrr::map(cnv_states, function(x){paste0(x, collapse = ',')})))
-    
+
     return(segs_consensus)
 }
 
@@ -2046,7 +2047,7 @@ test_multi_allelic = function(bulks, segs_consensus, min_LLR = 5, p_min = 0.999)
 #' @param sc_post dataframe Single-cell posteriors
 #' @param segs_consensus dataframe Consensus segments
 #' @return dataframe Single-cell posteriors with multi-allelic CNVs split into different entries
-#' @keywords internal 
+#' @keywords internal
 expand_states = function(sc_post, segs_consensus) {
 
     segs_multi = segs_consensus %>% filter(n_states > 1) %>%
@@ -2056,7 +2057,7 @@ expand_states = function(sc_post, segs_consensus) {
 
     if (any(segs_consensus$n_states > 1)) {
 
-        sc_post_multi = sc_post %>% 
+        sc_post_multi = sc_post %>%
             select(-cnv_state) %>%
             inner_join(
                 segs_multi,
@@ -2064,7 +2065,7 @@ expand_states = function(sc_post, segs_consensus) {
                 relationship = "many-to-many"
             ) %>%
             mutate(
-                seg = paste0(seg, '_', cnv_state), 
+                seg = paste0(seg, '_', cnv_state),
             ) %>%
             rowwise() %>%
             mutate(
@@ -2092,7 +2093,7 @@ expand_states = function(sc_post, segs_consensus) {
 
 ## gtools is orphaned
 ## https://github.com/cran/gtools/blob/master/R/mixedsort.R
-#' @keywords internal 
+#' @keywords internal
 mixedsort <- function(x,
                       decreasing = FALSE,
                       na.last = TRUE,
@@ -2111,7 +2112,7 @@ mixedsort <- function(x,
   x[ord]
 }
 
-#' @keywords internal 
+#' @keywords internal
 mixedorder <- function(x,
                        decreasing = FALSE,
                        na.last = TRUE,
@@ -2291,10 +2292,10 @@ roman2int <- function(roman){
 }
 
 
-## for tidyverse (magrittr & dplyr) functions 
+## for tidyverse (magrittr & dplyr) functions
 if (getRversion() >= "2.15.1"){
   utils::globalVariables(c(".", "AD", "AD_all", "ALT", "AR", "CHROM", "DP", "DP_all", "FILTER", "FP",
-    "GT", "ID", "LLR", "LLR_sample","LLR_x", "LLR_y", "L_x_a", "L_x_d", "L_x_n", 
+    "GT", "ID", "LLR", "LLR_sample","LLR_x", "LLR_y", "L_x_a", "L_x_d", "L_x_n",
     "L_y_a", "L_y_d", "L_y_n", "MAF", "OTH", "OTH_all", "POS",
     "QUAL", "REF", "TP", "UQ", "Y_obs", "Z", "Z_amp", "Z_bamp", "Z_bdel", "Z_clone", "Z_clone_x",
     "Z_clone_y", "Z_cnv", "Z_del", "Z_loh", "Z_n", "acen_hg19", "acen_hg38", "annot", "avg_entropy",
@@ -2310,8 +2311,8 @@ if (getRversion() >= "2.15.1"){
     "l11_y", "l20", "l20_x", "l20_y", "l21", "l21_x", "l21_y", "l22", "l22_x", "l22_y", "l31",
     "l31_x", "l31_y", "l_clone", "l_clone_x", "l_clone_y", "label", "lambda_obs", "lambda_ref", "last_mut", "leaf",
     "len_overlap", "len_x", "len_y", "lnFC", "lnFC_i", "lnFC_j", "lnFC_max_i", "lnFC_max_j",
-    "logBF", "logBF_x", "logBF_y", "logFC", "loh", "major", "major_count", "marker_index", 
-    "minor", "minor_count", "mu", "mut_burden", "n_chrom_snp", "n_genes", "n_mut", "n_sibling", 
+    "logBF", "logBF_x", "logBF_y", "logFC", "loh", "major", "major_count", "marker_index",
+    "minor", "minor_count", "mu", "mut_burden", "n_chrom_snp", "n_genes", "n_mut", "n_sibling",
     "n_snps", "n_states", "name", "node", "node_phylo", "nodes", "p", "pAD", "pBAF", "p_0",
     "p_1", "p_amp", "p_bamp", "p_bdel", "p_cnv", "p_cnv_expand", "p_del", "p_loh", "p_max", "p_n", "p_neu", "p_s", "p_up",
     "phi_mle", "phi_mle_roll", "phi_sigma", "pnorm.range", "potential_missing_columns",
